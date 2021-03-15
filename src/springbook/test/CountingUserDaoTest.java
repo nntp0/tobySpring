@@ -4,16 +4,15 @@ import java.sql.SQLException;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.support.GenericXmlApplicationContext;
 
 import springbook.user.dao.CountingConnectionMaker;
-import springbook.user.dao.CountingDaoFactory;
 import springbook.user.dao.UserDao;
 import springbook.user.domain.User;
 
 public class CountingUserDaoTest {
 	public static void main(String args[]) throws ClassNotFoundException, SQLException {
-		ApplicationContext context = new AnnotationConfigApplicationContext(CountingDaoFactory.class);
+		ApplicationContext context = new GenericXmlApplicationContext("resources/applicationCountingContext.xml");
 		UserDao dao = null;
 		User user = null;
 		

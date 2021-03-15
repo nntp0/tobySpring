@@ -8,14 +8,16 @@ public class CountingDaoFactory {
 	@Bean
 	public UserDao userDao() {
 		UserDao dao = new UserDao();
-		
 		dao.setConnectionMaker(createConnection());
 		
 		return dao;		
 	}
 	@Bean
 	public ConnectionMaker createConnection() {
-		return new CountingConnectionMaker(realConnectionMaker());
+		CountingConnectionMaker ccm = new CountingConnectionMaker();
+		ccm.setCountingConnectionMaker(realConnectionMaker());
+		
+		return ccm;
 	}
 	@Bean
 	public ConnectionMaker realConnectionMaker() {		
