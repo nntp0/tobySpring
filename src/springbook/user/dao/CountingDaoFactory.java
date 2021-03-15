@@ -1,26 +1,36 @@
 package springbook.user.dao;
 
+import javax.sql.DataSource;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 
 @Configuration
 public class CountingDaoFactory {
 	@Bean
 	public UserDao userDao() {
 		UserDao dao = new UserDao();
-		dao.setConnectionMaker(createConnection());
+		dao.setDataSource(dataSource());
 		
 		return dao;		
 	}
 	@Bean
-	public ConnectionMaker createConnection() {
-		CountingConnectionMaker ccm = new CountingConnectionMaker();
-		ccm.setCountingConnectionMaker(realConnectionMaker());
+	public DataSource dataSource() {
+		CountingDataSource cds = new CountingDataSource();
+		cds.setDataSource(realDataSource());
 		
-		return ccm;
+		return cds;
 	}
 	@Bean
-	public ConnectionMaker realConnectionMaker() {		
-		return new DConnectionMaker();
+	public DataSource realDataSource() {		
+		SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
+		
+		dataSource.setDriverClass(oracle.jdbc.driver.OracleDriver.class);
+		dataSource.setUrl("jdbc:oracle:thin:@localhost:1521:xe");
+		dataSource.setUsername("hr");
+		dataSource.setPassword("hr");
+		
+		return dataSource;
 	}
 }

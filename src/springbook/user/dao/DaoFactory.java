@@ -1,22 +1,29 @@
 package springbook.user.dao;
 
+import javax.sql.DataSource;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 
 @Configuration
 public class DaoFactory {
 	@Bean
 	public UserDao userDao() {
 		UserDao dao = new UserDao();
-		
-		dao.setConnectionMaker(createConnection());
+		dao.setDataSource(dataSource());
 		
 		return dao;		
 	}
 	@Bean
-	public ConnectionMaker createConnection() {
-		ConnectionMaker connectionMaker = new DConnectionMaker(); 
+	public DataSource dataSource() {
+		SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
 		
-		return connectionMaker;
+		dataSource.setDriverClass(oracle.jdbc.driver.OracleDriver.class);
+		dataSource.setUrl("jdbc:oracle:thin:@localhost:1521:xe");
+		dataSource.setUsername("hr");
+		dataSource.setPassword("hr");
+		
+		return dataSource;
 	}
 }
