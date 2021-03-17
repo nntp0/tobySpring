@@ -2,35 +2,93 @@ package springbook.test;
 
 import java.sql.SQLException;
 
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import static org.junit.Assert.assertThat;
+import static org.hamcrest.CoreMatchers.is;
+
+import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.support.GenericXmlApplicationContext;
+//import org.springframework.context.support.GenericXmlApplicationContext;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
 //import springbook.user.dao.DaoFactory;
 import springbook.user.dao.UserDao;
 import springbook.user.domain.User;
 
+@TestExecutionListeners( { DependencyInjectionTestExecutionListener.class })
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations="../../resources/test-applicationContext.xml")
 public class UserDaoTest {
-	public static void main(String args[]) throws ClassNotFoundException, SQLException {
-		ApplicationContext context = new GenericXmlApplicationContext("resources/applicationContext.xml");
+	
+	private User user1;
+	private User user2;
+	private User user3;
+	
+	@Autowired
+	private UserDao dao;
+	@Before
+	public void setUp() {
+		//context = new GenericXmlApplicationContext("resources/applicationContext.xml");
 		//ApplicationContext context = new AnnotationConfigApplicationContext(DaoFactory.class); 
-		UserDao dao = context.getBean("userDao", UserDao.class);
+		//dao = context.getBean("userDao", UserDao.class);
 		
-		User user = new User();
-		user.setId("nntp");
-		user.setName("±èÇöºó");
-		user.setPassword("1234");
+		user1 = new User("nntp", "±èÇöºó", "1234");
+		user2 = new User("2jinsung", "ÀÌÁø¼º", "4567");
+		user3 = new User("fedss2", "ÀÌ°Ç", "1357");
 		
-		dao.add(user);
-		System.out.println("»ý¼º ¿Ï·á");
-		
-		User user2 = dao.get(user.getId());
-		System.out.println(user2.getId());
-		System.out.println(user2.getName());
-		System.out.println(user2.getPassword());
-		System.out.println("Á¶È¸ ¿Ï·á");
-		
-		((ConfigurableApplicationContext)context).close();
 	}
+	@Test
+	public void addAndGet() throws SQLException {
+		dao.deleteAll();
+		assertThat(dao.getCount(), is(0));
+		
+		
+		
+		dao.add(user1);
+		dao.add(user2);
+		assertThat(dao.getCount(), is(2));
+		
+		user3 = dao.get(user1.getId());
+		assertThat(user1.getName(), is(user3.getName()));
+		assertThat(user1.getPassword(), is(user3.getPassword()));
+		
+		user3 = dao.get(user2.getId());
+		assertThat(user2.getName(), is(user3.getName()));
+		assertThat(user2.getPassword(), is(user3.getPassword()));
+	}
+	
+	@Test
+	public void getCount() throws SQLException {
+		dao.deleteAll();
+		assertThat(dao.getCount(), is(0));
+		
+		dao.add(user1);
+		assertThat(dao.getCount(), is(1));
+		
+		dao.add(user2);
+		assertThat(dao.getCount(), is(2));
+		
+		dao.add(user3);
+		assertThat(dao.getCount(), is(3));
+	}
+	
+	@Test(expected=EmptyResultDataAccessException.class)
+	public void getUserFailure() throws SQLException {		
+		dao.deleteAll();
+		assertThat(dao.getCount(), is(0));
+		
+		dao.get("unknown_id");
+	}
+	
+//	@After
+//	public void tearDown() {
+//		((ConfigurableApplicationContext)context).close();
+//	}
 }

@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import javax.sql.DataSource;
 
 import springbook.user.domain.User;
+import org.springframework.dao.EmptyResultDataAccessException;
 
 public class UserDao {
 	private DataSource dataSource;
@@ -15,7 +16,7 @@ public class UserDao {
 	public void setDataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 	}
-    public void add(User user) throws ClassNotFoundException, SQLException {
+    public void add(User user) throws SQLException {
     	
         Connection c = null;
         PreparedStatement ps = null;
@@ -34,7 +35,7 @@ public class UserDao {
     	c.close();
     }
     
-    public User get(String id) throws ClassNotFoundException, SQLException {
+    public User get(String id) throws SQLException {
     	
         Connection c = null;
         PreparedStatement ps = null;
@@ -47,18 +48,58 @@ public class UserDao {
     	ps.setString(1, id);
     	
     	rs = ps.executeQuery();
-    	rs.next();
-    	User user = new User();
-    	user.setId(rs.getString("id"));
-    	user.setName(rs.getString("name"));
-    	user.setPassword(rs.getString("password"));
+    	User user = null;
+    	if (rs.next()) {
+    		user = new User();
+    		user.setId(rs.getString("id"));
+    		user.setName(rs.getString("name"));
+    		user.setPassword(rs.getString("password"));    		
+    	}
     	
     	rs.close();
     	ps.close();
     	c.close();
     	
+    	if (user==null) throw new EmptyResultDataAccessException(1);
+    	
     	return user;
     }
-     
     
+    public void deleteAll() throws SQLException {
+    	Connection c = null;
+        PreparedStatement ps = null;
+        
+    	c = dataSource.getConnection();
+    	
+    	ps = c.prepareStatement(
+    			"TRUNCATE TABLE users");
+    	ps.executeUpdate();
+    	
+    	ps.close();
+    	c.close();
+    }
+    
+    public int getCount() throws SQLException {
+    	Connection c = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        
+        c = dataSource.getConnection();
+    	
+    	ps = c.prepareStatement(
+    			"SELECT id, name, password FROM users");
+    	
+    	int count = 0;
+    	rs = ps.executeQuery();
+    	
+    	while(rs.next()) {
+    		count++;
+    	}
+    	
+    	rs.close();
+    	ps.close();
+    	c.close();
+    	
+    	return count;
+    }
 }

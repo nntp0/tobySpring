@@ -49,3 +49,16 @@ IoC/DI 컨테이너
 
 DI Configuration 생성방법; 자바 클래스, XML
 <beans>를 루트 엘리먼트로 <bean> 자식으로 가질 수 있음
+
+JUnit: Testing Framework;
+Requirements: public & @Test 
+테스트 작성 규칙: 실패를 먼저 고려
+	1. 상황 발생 조건
+	2. 상황 발생 행위
+	3. 상황 발생 결과
+	
+@Before -> @Test -> @After
+픽스처
+
+침투적기술 비침투적기술
+학습테스트(Learning Test)
