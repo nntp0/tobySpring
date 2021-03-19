@@ -11,13 +11,14 @@ import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
-import springbook.user.dao.UserDao;
+import springbook.user.dao.UserDaoJdbc;
 import springbook.user.domain.User;
 
 @TestExecutionListeners( { DependencyInjectionTestExecutionListener.class })
@@ -30,7 +31,7 @@ public class UserDaoTest {
 	private User user3;
 	
 	@Autowired
-	private UserDao dao;
+	private UserDaoJdbc dao;
 	@Before
 	public void setUp() {
 		
@@ -82,7 +83,15 @@ public class UserDaoTest {
 		dao.get("unknown_id");
 	}
 	
-	@Test
+	@Test(expected=DuplicateKeyException.class)
+	public void duplicateKey() throws SQLException {		
+		dao.deleteAll();
+		
+		dao.add(user1);
+		dao.add(user1);
+	}
+	
+	@Test 
 	public void getAllUsers() throws SQLException {
 		dao.deleteAll();
 		assertThat(dao.getCount(), is(0));
@@ -113,6 +122,8 @@ public class UserDaoTest {
 		assertThat(user1.getName(), is(user2.getName()));
 		assertThat(user1.getPassword(), is(user2.getPassword()));
 	}
+	
+	
 	
 //	@After
 //	public void tearDown() {

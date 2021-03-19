@@ -1,4 +1,4 @@
-package springbook.test;
+package notUse;
 
 import java.sql.SQLException;
 
@@ -24,7 +24,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
 //import springbook.user.dao.DaoFactory;
-import springbook.user.dao.UserDao;
+import springbook.user.dao.UserDaoJdbc;
 import springbook.user.domain.User;
 
 @TestExecutionListeners( { DependencyInjectionTestExecutionListener.class })
@@ -40,7 +40,7 @@ public class UserDaoTest_ActiveDI {
 	@Autowired
 	private ApplicationContext context;
 	@Autowired
-	private UserDao dao;
+	private UserDaoJdbc dao;
 	@Before
 	public void setUp() {
 		//context = new GenericXmlApplicationContext("resources/applicationContext.xml");

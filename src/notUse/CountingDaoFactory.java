@@ -6,14 +6,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 
-import springbook.user.dao.CountingDataSource;
-import springbook.user.dao.UserDao;
+import springbook.user.dao.UserDaoJdbc;
 
 @Configuration
 public class CountingDaoFactory {
 	@Bean
-	public UserDao userDao() {
-		UserDao dao = new UserDao();
+	public UserDaoJdbc userDao() {
+		UserDaoJdbc dao = new UserDaoJdbc();
 		dao.setDataSource(dataSource());
 		
 		return dao;		

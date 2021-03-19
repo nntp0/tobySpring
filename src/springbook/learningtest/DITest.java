@@ -15,7 +15,7 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
-import springbook.user.dao.UserDao;
+import springbook.user.dao.UserDaoJdbc;
 import springbook.user.domain.User;
 
 @TestExecutionListeners( { DependencyInjectionTestExecutionListener.class })
@@ -25,7 +25,7 @@ public class DITest {
 	@Autowired
 	private ApplicationContext context;
 	@Autowired
-	private UserDao dao;
+	private UserDaoJdbc dao;
 	@Autowired
 	private User user;
 	@Before
@@ -36,15 +36,15 @@ public class DITest {
 	}
 	@Test
 	public void isSingletonObject() {
-		UserDao dao1 = context.getBean("userDao", UserDao.class);
-		UserDao dao2 = context.getBean("userDao", UserDao.class);
+		UserDaoJdbc dao1 = context.getBean("userDao", UserDaoJdbc.class);
+		UserDaoJdbc dao2 = context.getBean("userDao", UserDaoJdbc.class);
 		
 		assertThat(dao1, CoreMatchers.is(CoreMatchers.sameInstance(dao2)));
 	}
 	@Test
 	public void isSameAutowiredAndGetBean() throws SQLException {
 		
-		UserDao dao2 = context.getBean("userDao", UserDao.class);
+		UserDaoJdbc dao2 = context.getBean("userDao", UserDaoJdbc.class);
 		
 		assertThat(dao, CoreMatchers.is(CoreMatchers.sameInstance(dao2)));
 	}

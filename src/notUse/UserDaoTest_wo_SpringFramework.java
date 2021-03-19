@@ -1,4 +1,4 @@
-package springbook.test;
+package notUse;
 
 import java.sql.SQLException;
 
@@ -16,7 +16,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 //import springbook.user.dao.DaoFactory;
-import springbook.user.dao.UserDao;
+import springbook.user.dao.UserDaoJdbc;
 import springbook.user.domain.User;
 
 public class UserDaoTest_wo_SpringFramework {
@@ -25,12 +25,12 @@ public class UserDaoTest_wo_SpringFramework {
 	private User user2;
 	private User user3;
 	
-	private UserDao dao;
+	private UserDaoJdbc dao;
 	@Before
 	public void setUp() {
 		//context = new GenericXmlApplicationContext("resources/applicationContext.xml");
 		//ApplicationContext context = new AnnotationConfigApplicationContext(DaoFactory.class); 
-		dao = new UserDao();
+		dao = new UserDaoJdbc();
 		DataSource dataSource = new SingleConnectionDataSource("jdbc:oracle:thin:@localhost:1521:xe", "test", "test", true);
 		dao.setDataSource(dataSource);
 		
