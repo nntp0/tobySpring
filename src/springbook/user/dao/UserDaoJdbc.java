@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
+import springbook.user.domain.Level;
 import springbook.user.domain.User;
 
 import org.springframework.dao.DataAccessException;
@@ -24,6 +25,9 @@ public class UserDaoJdbc implements UserDao{
 			user.setId(rs.getString("id"));
 			user.setName(rs.getString("name"));
 			user.setPassword(rs.getString("password"));
+			user.setLevel(Level.valueOf(rs.getInt("user_level")));
+			user.setLogin(rs.getInt("login"));
+			user.setRecommend(rs.getInt("recommend"));
 			return user;
 		}
 	};
@@ -32,15 +36,19 @@ public class UserDaoJdbc implements UserDao{
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
 	}
 	
-    public void add(User user) {
-    	this.jdbcTemplate.update("insert into users(id, name, password) values (?, ?, ?)",
+    public int add(User user) {
+    	return this.jdbcTemplate.update("insert into users(id, name, password, user_level, login, recommend) values (?, ?, ?, ?, ?, ?)",
     			user.getId(),
     			user.getName(),
-    			user.getPassword());
+    			user.getPassword(),
+    			user.getLevel().intValue(),
+    			user.getLogin(),
+    			user.getRecommend());
+    	
     }
     
-    public void deleteAll() {
-    	this.jdbcTemplate.update("truncate table users");
+    public int deleteAll() {
+    	return this.jdbcTemplate.update("truncate table users");
     }
 
     public User get(String id)  {
@@ -93,5 +101,15 @@ public class UserDaoJdbc implements UserDao{
     			}, this.userMapper);
     }
     
+    public int update(User user) {
+    	return this.jdbcTemplate.update("update users set name=?, password=?, user_level=?, login=?, recommend=? where id=?",
+    			user.getName(),
+    			user.getPassword(),
+    			user.getLevel().intValue(),
+    			user.getLogin(),
+    			user.getRecommend(),
+    			user.getId()
+    			);
+    }
     
 }

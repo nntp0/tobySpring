@@ -20,6 +20,7 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
 
 import springbook.user.dao.UserDaoJdbc;
 import springbook.user.domain.User;
+import springbook.user.domain.Level;
 
 @TestExecutionListeners( { DependencyInjectionTestExecutionListener.class })
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -35,9 +36,9 @@ public class UserDaoTest {
 	@Before
 	public void setUp() {
 		
-		user1 = new User("nntp", "±Ë«ˆ∫Û", "1234");
-		user2 = new User("jinsung", "¿Ã¡¯º∫", "4567");
-		user3 = new User("fedss2", "¿Ã∞«", "1357");
+		user1 = new User("nntp", "±Ë«ˆ∫Û", "1234", Level.BASIC, 1, 0);
+		user2 = new User("jinsung", "¿Ã¡¯º∫", "4567", Level.SILVER, 55, 10);
+		user3 = new User("fedss2", "¿Ã∞«", "1357", Level.GOLD, 100, 40);
 		
 	}
 	@Test
@@ -121,6 +122,31 @@ public class UserDaoTest {
 		assertThat(user1.getId(), is(user2.getId()));
 		assertThat(user1.getName(), is(user2.getName()));
 		assertThat(user1.getPassword(), is(user2.getPassword()));
+		assertThat(user1.getLevel(), is(user2.getLevel()));
+		assertThat(user1.getLogin(), is(user2.getLogin()));
+		assertThat(user1.getRecommend(), is(user2.getRecommend()));
+	}
+	
+	@Test
+	public void update() {
+		dao.deleteAll();
+		
+		dao.add(user1);
+		dao.add(user2);
+		
+		user1.setName("¿Ã¿Ã¿Ã");
+		user1.setPassword("9999");
+		user1.setLevel(Level.GOLD);
+		user1.setLogin(10000);
+		user1.setRecommend(20000);
+		int updatedRow = dao.update(user1);
+		
+		assertThat(updatedRow, is(1));
+		
+		User user1Update = dao.get(user1.getId());
+		User user2Same = dao.get(user2.getId());
+		checkSameUser(user1, user1Update);
+		checkSameUser(user2, user2Same);
 	}
 	
 	
