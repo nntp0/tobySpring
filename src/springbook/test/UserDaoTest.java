@@ -36,18 +36,16 @@ public class UserDaoTest {
 	@Before
 	public void setUp() {
 		
-		user1 = new User("nntp", "±èÇöºó", "1234", Level.BASIC, 1, 0);
-		user2 = new User("jinsung", "ÀÌÁø¼º", "4567", Level.SILVER, 55, 10);
-		user3 = new User("fedss2", "ÀÌ°Ç", "1357", Level.GOLD, 100, 40);
+		user1 = new User("nntp", "±èÇöºó", "1234", Level.BASIC, 1, 0, "nntp@gamil");
+		user2 = new User("jinsung", "ÀÌÁø¼º", "4567", Level.SILVER, 55, 10, "jinsung@naver");
+		user3 = new User("fedss2", "ÀÌ°Ç", "1357", Level.GOLD, 100, 40, "fedss2@daum");
 		
 	}
 	@Test
 	public void addAndGet() throws SQLException {
 		dao.deleteAll();
 		assertThat(dao.getCount(), is(0));
-		
-		
-		
+
 		dao.add(user1);
 		dao.add(user2);
 		assertThat(dao.getCount(), is(2));
@@ -125,6 +123,7 @@ public class UserDaoTest {
 		assertThat(user1.getLevel(), is(user2.getLevel()));
 		assertThat(user1.getLogin(), is(user2.getLogin()));
 		assertThat(user1.getRecommend(), is(user2.getRecommend()));
+		assertThat(user1.getEmail(), is(user2.getEmail()));
 	}
 	
 	@Test
@@ -139,6 +138,7 @@ public class UserDaoTest {
 		user1.setLevel(Level.GOLD);
 		user1.setLogin(10000);
 		user1.setRecommend(20000);
+		user1.setEmail("ÀÌÀÌÀÌ@gamil");
 		int updatedRow = dao.update(user1);
 		
 		assertThat(updatedRow, is(1));
@@ -148,7 +148,6 @@ public class UserDaoTest {
 		checkSameUser(user1, user1Update);
 		checkSameUser(user2, user2Same);
 	}
-	
 	
 	
 //	@After
