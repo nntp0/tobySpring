@@ -2,8 +2,8 @@ package springbook.test;
 
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static springbook.user.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
-import static springbook.user.service.UserService.MIN_RECOMMEND_FOR_GOLD;
+import static springbook.user.service.UserServiceImpl.MIN_LOGCOUNT_FOR_SILVER;
+import static springbook.user.service.UserServiceImpl.MIN_RECOMMEND_FOR_GOLD;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +27,8 @@ import springbook.user.dao.UserDao;
 import springbook.user.domain.Level;
 import springbook.user.domain.User;
 import springbook.user.service.UserService;
+import springbook.user.service.UserServiceImpl;
+import springbook.user.service.UserServiceTx;
 
 import static org.hamcrest.CoreMatchers.is;
 
@@ -42,6 +44,8 @@ public class UserServiceTest {
 	private PlatformTransactionManager transactionManager;
 	@Autowired
 	private MailSender mailSender;
+	@Autowired
+	private UserServiceImpl userServiceImpl;
 	
 	List<User> users;
 	
@@ -62,6 +66,10 @@ public class UserServiceTest {
 	public void upgradeLevels() throws Exception {
 		userDao.deleteAll();
 		for(User user : users) userDao.add(user);
+		
+		MockMailSender mockMailSender = new MockMailSender();
+		userServiceImpl.setMailSender(mockMailSender);
+		
 		userService.upgradeLevels();
 		
 		checkLevel(users.get(0), false);
@@ -71,6 +79,68 @@ public class UserServiceTest {
 		checkLevel(users.get(4), true);
 		checkLevel(users.get(5), true);
 		checkLevel(users.get(6), false);
+		
+		List<String> request = mockMailSender.getRequests();
+		assertThat(request.size(), is(4));
+		assertThat(request.contains(users.get(0).getEmail()), is(false));
+		assertThat(request.contains(users.get(1).getEmail()), is(true));
+		assertThat(request.contains(users.get(2).getEmail()), is(false));
+		assertThat(request.contains(users.get(3).getEmail()), is(true));
+		assertThat(request.contains(users.get(4).getEmail()), is(true));
+		assertThat(request.contains(users.get(5).getEmail()), is(true));
+		assertThat(request.contains(users.get(6).getEmail()), is(false));
+	}
+	
+	@Test
+	public void upgradeLevelsSeperated() throws Exception {
+		UserServiceImpl userServiceImpl = new UserServiceImpl();
+		
+		MockUserDao mockUserDao = new MockUserDao(this.users);
+		userServiceImpl.setUserDao(mockUserDao);
+		
+		MockMailSender mockMailSender = new MockMailSender();
+		userServiceImpl.setMailSender(mockMailSender);
+		
+		userServiceImpl.upgradeLevels();
+		
+		List<User> updated = mockUserDao.getUpdated();
+		assertThat(updated.size(), is(4));
+		checkUserAndLevel(updated.get(0), "jinsung", Level.SILVER);
+		checkUserAndLevel(updated.get(1), "kaiba", Level.SILVER);
+		checkUserAndLevel(updated.get(2), "ezio", Level.GOLD);
+		checkUserAndLevel(updated.get(3), "caludea", Level.GOLD);
+		
+		List<String> request = mockMailSender.getRequests();
+		assertThat(request.size(), is(4));
+		assertThat(request.contains(users.get(0).getEmail()), is(false));
+		assertThat(request.contains(users.get(1).getEmail()), is(true));
+		assertThat(request.contains(users.get(2).getEmail()), is(false));
+		assertThat(request.contains(users.get(3).getEmail()), is(true));
+		assertThat(request.contains(users.get(4).getEmail()), is(true));
+		assertThat(request.contains(users.get(5).getEmail()), is(true));
+		assertThat(request.contains(users.get(6).getEmail()), is(false));
+	}
+	
+	//Mockito Mock 생성이 안됨; 원인은 JDK가 기능을 지원하지 않는다.
+//	@Test
+//	public void upgradeLevelsWithMockito() throws Exception {
+//		UserServiceImpl userServiceImpl = new UserServiceImpl();
+//		
+//		UserDao mockUserDao = mock(UserDao.class);
+//		when(mockUserDao.getAll()).thenReturn(users);
+//		userServiceImpl.setUserDao(mockUserDao);
+//		
+//		MailSender mockMailSender = mock(MailSender.class);
+//		userServiceImpl.setMailSender(mockMailSender);
+//		
+//		userServiceImpl.upgradeLevels();
+//		
+//		verify(mockUserDao, times(2)).update(any(User.class));
+//	}
+	
+	private void checkUserAndLevel(User updated, String expectedId, Level expectedLevel) {
+		assertThat(updated.getId(), is(expectedId));
+		assertThat(updated.getLevel(), is(expectedLevel));
 	}
 	
 	@Test
@@ -93,11 +163,13 @@ public class UserServiceTest {
 	
 	@Test
 	public void upgradeAllOrNothing() throws Exception {
-		UserService testUserService = new TestUserService(users.get(3).getId());
-		testUserService.setUserDao(this.userDao);
-		testUserService.setTransactionManager(this.transactionManager);
-		testUserService.setMailSender(mailSender);
+		TestUserServiceImpl testUserServiceImpl = new TestUserServiceImpl(users.get(3).getId());
+		testUserServiceImpl.setUserDao(this.userDao);
+		testUserServiceImpl.setMailSender(this.mailSender);
 		
+		UserServiceTx testUserService = new UserServiceTx();
+		testUserService.setUserService(testUserServiceImpl);
+		testUserService.setTransactionManager(this.transactionManager);
 		
 		
 		userDao.deleteAll();
@@ -112,9 +184,9 @@ public class UserServiceTest {
 	
 	@Test
 	@DirtiesContext
-	public void sendEMailList() throws Exception {
+	public void sendEMailList() throws Exception { 
 		MockMailSender mailSender = new MockMailSender();
-		userService.setMailSender(mailSender);
+		userServiceImpl.setMailSender(mailSender);
 
 		userDao.deleteAll();
 		for(User user : users) userDao.add(user);
@@ -150,15 +222,13 @@ public class UserServiceTest {
 			assertThat(userRead.getLevel(), is(user.getLevel()));
 		}
 	}
-	
 	static class TestUserServiceException extends RuntimeException {
 		private static final long serialVersionUID = 1L;
 	}
-	
-	static class TestUserService extends UserService {
+	static class TestUserServiceImpl extends UserServiceImpl {
 		private String id;
 		
-		private TestUserService(String id) {
+		private TestUserServiceImpl(String id) {
 			this.id = id;
 		}
 		
@@ -183,6 +253,37 @@ public class UserServiceTest {
 		@Override
 		public void send(SimpleMailMessage... arg0) throws MailException {
 			
+		}
+	}
+	static class MockUserDao implements UserDao {
+		private List<User> users;
+		private List<User> updated = new ArrayList<User>();
+		
+		private MockUserDao(List<User> users) {
+			this.users = users;
+		}
+		public List<User> getUpdated() {
+			return this.updated;
+		}
+		
+		public List<User> getAll() {
+			return this.users;
+		}
+		public int update(User user) {
+			updated.add(user);
+			return 1;
+		}
+		public int add(User user) {
+			throw new UnsupportedOperationException();
+		}
+		public User get(String id) {
+			throw new UnsupportedOperationException();
+		}	
+		public int deleteAll() {
+			throw new UnsupportedOperationException();
+		}
+		public int getCount() {
+			throw new UnsupportedOperationException();
 		}
 	}
 }
