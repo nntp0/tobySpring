@@ -4,7 +4,12 @@ import static org.junit.Assert.assertEquals;
 
 import java.lang.reflect.Proxy;
 
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
 import org.junit.Test;
+import org.springframework.aop.framework.ProxyFactoryBean;
+import org.springframework.aop.support.DefaultPointcutAdvisor;
+import org.springframework.aop.support.NameMatchMethodPointcut;
 
 public class SimpleProxyTest {
 	@Test
@@ -42,5 +47,46 @@ public class SimpleProxyTest {
 		assertEquals(helloProxy.sayThankYou("nntp"), "THANK YOU NNTP");
 		assertEquals(helloProxy.methodCount(), 3);
 		assertEquals(helloTarget.talkGoodBye("nntp"), "Good Bye nntp");
+	}
+	
+	@Test
+	public void proxyFactoryBean() {
+		ProxyFactoryBean pfBean = new ProxyFactoryBean();
+		pfBean.setTarget(new HelloTarget());
+		pfBean.addAdvice(new UppercaseAdvice());
+		
+		Hello proxiedHello = (Hello) pfBean.getObject();
+		
+		assertEquals(proxiedHello.sayHello("nntp"), "HELLO NNTP");
+		assertEquals(proxiedHello.sayHi("nntp"), "HI NNTP");
+		assertEquals(proxiedHello.sayThankYou("nntp"), "THANK YOU NNTP");
+		assertEquals(proxiedHello.talkGoodBye("nntp"), "GOOD BYE NNTP");
+	}
+	
+	@Test
+	public void pointcutAdvisor() {
+		ProxyFactoryBean pfBean = new ProxyFactoryBean();
+		pfBean.setTarget(new HelloTarget());
+		
+		NameMatchMethodPointcut pointcut = new NameMatchMethodPointcut();
+		pointcut.setMappedName("sayH*");
+		
+		pfBean.addAdvisor(new DefaultPointcutAdvisor(pointcut, new UppercaseAdvice()));
+		Hello proxiedHello = (Hello) pfBean.getObject();
+		
+		assertEquals(proxiedHello.sayHello("nntp"), "HELLO NNTP");
+		assertEquals(proxiedHello.sayHi("nntp"), "HI NNTP");
+		assertEquals(proxiedHello.sayThankYou("nntp"), "Thank you nntp");
+		assertEquals(proxiedHello.talkGoodBye("nntp"), "Good Bye nntp");
+	}
+	
+	static class UppercaseAdvice implements MethodInterceptor {
+
+		@Override
+		public Object invoke(MethodInvocation invocation) throws Throwable {
+			String ret = (String)invocation.proceed();
+			return ret.toUpperCase();
+		}
+		
 	}
 }

@@ -13,7 +13,9 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
@@ -30,9 +32,12 @@ import springbook.user.service.UserService;
 import springbook.user.service.UserServiceImpl;
 import springbook.user.service.UserServiceTx;
 
+
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations="../../resources/test-applicationContext.xml")
 public class UserServiceTest {
+	@Autowired
+	private ApplicationContext context;
 	@Autowired
 	private UserDao userDao;
 	@Autowired
@@ -220,6 +225,29 @@ public class UserServiceTest {
 		transactionHandler.setPattern("upgradeLevels");
 		
 		UserService txUserService = (UserService) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {UserService.class}, transactionHandler);
+		
+		
+		
+		userDao.deleteAll();
+		for(User user : users) userDao.add(user);
+		try {
+			txUserService.upgradeLevels();
+			fail("TestUserServiceException expected");
+		} catch (TestUserServiceException e) {
+		}
+		checkLevel(users.get(1), false);
+	}
+	@Test
+	@DirtiesContext
+	public void upgradeAllOrNothingByFactoryBean() throws Exception {
+		TestUserServiceImpl testUserServiceImpl = new TestUserServiceImpl(users.get(3).getId());
+		testUserServiceImpl.setUserDao(this.userDao);
+		testUserServiceImpl.setMailSender(this.mailSender);
+		
+		ProxyFactoryBean txProxyFactoryBean = context.getBean("&userService", ProxyFactoryBean.class);
+		txProxyFactoryBean.setTarget(testUserServiceImpl);
+		
+		UserService txUserService = (UserService) txProxyFactoryBean.getObject();
 		
 		
 		
